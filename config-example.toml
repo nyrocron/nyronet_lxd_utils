@@ -1,0 +1,13 @@
+[general]
+host_interface = "eth0"
+endpoint = "https://[::1]:8443"
+certificate = ["lxd.crt", "lxd.key"]
+https_verify = false
+
+[[container]]
+name = "nginx"
+
+    [[container.port]]
+    protocol = "tcp"
+    from = 80
+    to = 80
