@@ -23,11 +23,19 @@
 # SOFTWARE.
 
 import os
+import logging
+import logging.handlers
 from typing import Tuple, Sequence, Mapping
 
 import toml
 from netaddr import IPAddress, IPNetwork
 from pylxd import Client
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
+handler = logging.handlers.SysLogHandler(address='/dev/log')
+log.addHandler(handler)
 
 
 def format_address(address: IPAddress) -> str:
@@ -56,6 +64,7 @@ def generate_forwarding_rules(addresses: Mapping[str, Sequence[IPAddress]],
 
 def apply_rules(rules: Sequence[str]) -> None:
     for rule in rules:
+        log.info('applying: %s', rule)
         os.system(rule)
 
 
@@ -101,6 +110,7 @@ def main():
     lxd_client = Client(**client_params)
 
     container_names = [container["name"] for container in config["container"]]
+    log.debug('containers: %s', ', '.join(container_names))
     container_addresses = get_container_addresses(lxd_client, container_names, bridge_networks)
 
     container_ports = {container["name"]: [(port["protocol"], port["from"], port["to"])
