@@ -42,17 +42,21 @@ def generate_forwarding_rules(addresses: Mapping[str, Sequence[IPAddress]],
     for name, addresses in addresses.items():
         for protocol, from_port, to_port in ports[name]:
             for address in addresses:
-                rules.append("-t nat -A PREROUTING -i {host_if} -p {proto} --dport {from_port} "
+                iptables = "ip6tables" if address.version == 6 else "iptables"
+                rules.append("{iptables} -t nat -A PREROUTING "
+                             "-i {host_if} -p {proto} --dport {from_port} "
                              "-j DNAT --to-destination {address}:{to_port}"
-                             .format(host_if=host_interface, proto=protocol, from_port=from_port,
-                                     to_port=to_port, address=format_address(address)))
+                             .format(host_if=host_interface, proto=protocol,
+                                     from_port=from_port, to_port=to_port,
+                                     address=format_address(address),
+                                     iptables=iptables))
 
     return rules
 
 
 def apply_rules(rules: Sequence[str]) -> None:
     for rule in rules:
-        os.system('iptables ' + rule)
+        os.system(rule)
 
 
 def get_container_addresses(lxd_client: Client, container_names: Sequence[str],
